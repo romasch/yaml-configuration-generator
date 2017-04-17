@@ -15,7 +15,9 @@ class YamlConfigGeneratorTaskImpl(val input: Collection<String>, val targetPacka
     private fun createPackageInfo()  = createFile("package-info", packageInfoContent())
 
     private fun createJavaClasses() {
-        // TODO
+        generateJavaCode(input, targetPackage).forEach {name, content ->
+            createFile(name, content)
+        }
     }
     
     private fun createFile(name: String, content: String) {
