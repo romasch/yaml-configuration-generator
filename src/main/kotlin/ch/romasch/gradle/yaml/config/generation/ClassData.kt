@@ -3,55 +3,70 @@ class ClassData(val name: String) {
     val attributes: MutableMap<String, String> = HashMap()
 
     fun generate(packageName: String): String {
-        val sb = StringBuilder()
-        sb.append("package $packageName;")
-        sb.append("\n\npublic final class $name {\n")
+
+        val writer = JavaCodeWriter()
+        writer
+                .write("package $packageName;")
+                .writeln()
+                .writeln("public final class $name")
+                .beginBlock()
+                .writeln()
 
         // members
         attributes.forEach { name, type ->
-            sb.append("\n\tprivate final $type ${lower(name)};")
+            writer.writeln("private final $type ${lower(name)};")
         }
 
         // Constructor
-        sb.append("\n\n\tpublic $name(")
-        attributes.map(this::combineEntry).joinTo(sb, separator=", ")
-        sb.append(") {")
-        attributes.keys.map(this::lower).forEach { name ->
-            sb.append("\n\t\tthis.$name = $name;")
-        }
-        sb.append("\n\t}")
+        writer.writeln()
+                .writeln("public $name")
+                .writeArgumentList(attributes.map(this::combineEntry))
+                .beginBlock()
+                .writelnEach(attributes.keys.map(this::lower).map(this::generateAssignmentPart))
+                .endBlock()
 
         // Getters
         attributes.forEach {name, type ->
-            sb.append("\n\n\tpublic $type get${name}() {")
-            sb.append("\n\t\treturn ${lower(name)};")
-            sb.append("\n\t}")
+            writer.writeln()
+                    .writeln("public $type get${name}()")
+                    .beginBlock()
+                    .writeln("return ${lower(name)};")
+                    .endBlock()
         }
 
 
         // override()
-        sb.append("\n\n\tpublic $name override(java.util.Map yaml) {")
+        writer.writeln()
+                .writeln("public $name override(java.util.Map yaml)")
+                .beginBlock()
+
         attributes.forEach {name, type ->
-            sb.append("\n\t\t$type ${lower(name)} = this.${lower(name)};")
-            sb.append("\n\t\tif (yaml.containsKey(\"$name\") && yaml.get(\"$name\") instanceof ${yamlType(type)}) {")
-            sb.append("\n\t\t\t${lower(name)} = ")
-            if (yamlType(type) == "Map") {
-                sb.append("${lower(name)}.override((java.util.Map) yaml.get(\"$name\"));")
-            } else {
-                sb.append("($type) yaml.get(\"$name\");")
-            }
-            sb.append("\n\t\t}")
+            writer.writeln("$type ${lower(name)} = this.${lower(name)};")
+                    .writeln("if (yaml.containsKey(\"$name\") && yaml.get(\"$name\") instanceof ${yamlType(type)})")
+                    .beginBlock()
+                    .writeln("${lower(name)} = ")
+                    .write(generateOverridePart(name, type))
+                    .endBlock()
         }
 
-        sb.append("\n\t\treturn new $name(")
-        attributes.keys.map(this::lower).joinTo(sb, separator=", ")
-        sb.append(");")
+        writer.writeln("return new $name")
+                .writeArgumentList(attributes.keys.map(this::lower))
+                .write(";")
+                .endBlock()
 
-        sb.append("\n\t}")
 
-        sb.append("\n}\n")
-        return sb.toString()
+        // end class block
+        return writer
+                .endBlock()
+                .writeln()
+                .toString()
     }
+
+    private fun generateAssignmentPart(name: String) = "this.$name = $name;"
+
+    private fun generateOverridePart(name: String, type: String): String =
+            if (yamlType(type) == "Map") "${lower(name)}.override((java.util.Map) yaml.get(\"$name\"));"
+            else "($type) yaml.get(\"$name\");"
 
     private fun lower(name: String) = name[0].toLowerCase() + name.substring(1)
 
