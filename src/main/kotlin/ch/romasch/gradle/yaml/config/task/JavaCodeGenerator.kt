@@ -4,6 +4,7 @@ import ch.romasch.gradle.yaml.config.nodes.ClassDataGenerator
 import ch.romasch.gradle.yaml.config.analysis.ScalarKeyChecker
 import ch.romasch.gradle.yaml.config.analysis.YamlListChecker
 import ch.romasch.gradle.yaml.config.analysis.YamlNodeConverter
+import ch.romasch.gradle.yaml.config.generation.ConfigurationManagerGenerator
 import org.yaml.snakeyaml.Yaml
 import java.io.StringReader
 
@@ -16,5 +17,10 @@ fun generateJavaCode(input: Collection<String>, targetPackage: String): Map<Stri
 
         val gen = ClassDataGenerator()
         gen.visit(test2)
-        return gen.groups.values.associateBy({it.name}, {it.generate(targetPackage)})
+        val result = gen.groups.values.associateBy({ it.name }, { it.generate(targetPackage) }).toMutableMap()
+
+        // TODO: Make root config name configurable and add flag to skip manager generation.
+        val manager = ConfigurationManagerGenerator(targetPackage, "RootConfigType")
+        result.put(manager.managerName, manager.generate())
+        return result
 }

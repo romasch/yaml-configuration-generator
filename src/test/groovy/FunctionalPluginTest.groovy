@@ -23,6 +23,12 @@ class FunctionalPluginTest {
             plugins {
                 id 'ch.romasch.gradle.yaml-configuration-generator'
             }
+            repositories {
+                mavenCentral()
+            }
+            dependencies {
+                compile group: 'org.yaml', name: 'snakeyaml', version: '1.18'
+            }
             """.stripIndent()
     }
 

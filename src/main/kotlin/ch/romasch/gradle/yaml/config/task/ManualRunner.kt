@@ -36,28 +36,8 @@ fun main(args: Array<String>) {
 
 private class ManualRunner(val yaml: String) {
 
-    fun run() {
-        generateJavaCode(arrayListOf(yaml), "ch.romasch.test").values.forEach(::print)
-    }
+    fun run() = generateJavaCode(arrayListOf(yaml), "test").values.forEach(::print)
 
-//    public class ConfigManager {
-//
-//        private AtomicReference<ConfigurationType> config;
-//
-//        ConfigurationType get() {
-//            return config.get();
-//        }
-//
-//        synchronized void override(String yamlFile) {
-//            ConfigurationType newConfig = config.get();
-//
-//            Yaml yaml = new Yaml();
-//            Object parsed= yaml.load(yamlFile);
-//            ConfigurationType override = config.get().override(parsed);
-//            config.set(override);
-//        }
-//
-//    }
 }
 
 
