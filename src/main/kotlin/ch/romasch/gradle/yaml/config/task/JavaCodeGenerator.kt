@@ -20,7 +20,7 @@ fun generateJavaCode(input: Collection<String>, targetPackage: String): Map<Stri
         val result = gen.groups.values.associateBy({ it.name }, { it.generate(targetPackage) }).toMutableMap()
 
         // TODO: Make root config name configurable and add flag to skip manager generation.
-        val manager = ConfigurationManagerGenerator(targetPackage, "RootConfigType")
+        val manager = ConfigurationManagerGenerator(targetPackage, "RootConfigType", "Configuration")
         result.put(manager.managerName, manager.generate())
         return result
 }
