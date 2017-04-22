@@ -45,7 +45,7 @@ class ClassData(val name: String) {
 
         // override()
         writer.writeln()
-                .writeln("public $name override(java.util.Map yaml)")
+                .writeln("$name override(java.util.Map yaml)")
                 .beginBlock()
 
         attributes.forEach {name, type ->
