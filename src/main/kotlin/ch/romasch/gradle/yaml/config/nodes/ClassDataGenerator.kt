@@ -23,6 +23,9 @@ class ClassDataGenerator : ConfigVisitor() {
         currentClass = assignment.name + "Type"
         super.visitAssignment(assignment)
         classes.peek().attributes.put(assignment.name, currentType)
+        if (assignment.value is ConfigNode.ScalarConfigValue) {
+            classes.peek().attributeValues.put(assignment.name, assignment.value.node.value)
+        }
     }
 
 

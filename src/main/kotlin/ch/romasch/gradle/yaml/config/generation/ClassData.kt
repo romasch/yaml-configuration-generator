@@ -1,6 +1,7 @@
 package ch.romasch.gradle.yaml.config.generation
 class ClassData(val name: String) {
     val attributes: MutableMap<String, String> = HashMap()
+    val attributeValues: MutableMap<String, String> = HashMap()
 
     fun generate(packageName: String): String {
 
@@ -17,9 +18,16 @@ class ClassData(val name: String) {
             writer.writeln("private final $type ${lower(name)};")
         }
 
-        // Constructor
+        // Default constructor
         writer.writeln()
-                .writeln("public $name")
+                .writeln("$name()")
+                .beginBlock()
+                .writelnEach(attributes.keys.map(this::generateInitializationPart))
+                .endBlock()
+
+        // Override Constructor
+        writer.writeln()
+                .writeln("private $name")
                 .writeArgumentList(attributes.map(this::combineEntry))
                 .beginBlock()
                 .writelnEach(attributes.keys.map(this::lower).map(this::generateAssignmentPart))
@@ -62,15 +70,30 @@ class ClassData(val name: String) {
                 .toString()
     }
 
+    private fun generateInitializationPart(attribute: String): String {
+        return "this.${lower(attribute)} = ${generateInitializationValue(attribute)};"
+    }
+
+    private fun generateInitializationValue(attribute: String): String? {
+        val type = attributes[attribute]
+        return when (type) {
+            "Integer", "Boolean" -> attributeValues[attribute]
+            "String" -> "\"${attributeValues[attribute]}\""
+            else -> "new $type()"
+        }
+    }
+
     private fun generateAssignmentPart(name: String) = "this.$name = $name;"
 
     private fun generateOverridePart(name: String, type: String): String =
-            if (yamlType(type) == "Map") "${lower(name)}.override((java.util.Map) yaml.get(\"$name\"));"
-            else "($type) yaml.get(\"$name\");"
+            if (isScalar(type)) "($type) yaml.get(\"$name\");"
+            else "${lower(name)}.override((java.util.Map) yaml.get(\"$name\"));"
 
     private fun lower(name: String) = name[0].toLowerCase() + name.substring(1)
 
-    private fun yamlType(type: String) = when (type) {
+    private fun isScalar(type: String?) = yamlType(type) != "java.util.Map"
+
+    private fun yamlType(type: String?) = when (type) {
         "Integer" -> "Integer"
         "Boolean" -> "Boolean"
         "String" -> "String"
